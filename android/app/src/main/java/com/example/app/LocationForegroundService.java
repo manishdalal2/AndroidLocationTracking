@@ -45,6 +45,7 @@ public class LocationForegroundService extends Service {
     private ExecutorService executorService;
 
     private String serverEndpoint = "http://192.168.1.155:3000";
+    private String accessToken = "";
 
     @Override
     public void onCreate() {
@@ -62,8 +63,24 @@ public class LocationForegroundService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "Service onStartCommand");
 
-        if (intent != null && intent.hasExtra("endpoint")) {
-            serverEndpoint = intent.getStringExtra("endpoint");
+        if (intent != null) {
+            // Handle token update action
+            if ("UPDATE_TOKEN".equals(intent.getAction())) {
+                String newToken = intent.getStringExtra("accessToken");
+                if (newToken != null) {
+                    accessToken = newToken;
+                    Log.d(TAG, "Access token updated in service");
+                }
+                return START_NOT_STICKY;
+            }
+
+            // Handle initial startup
+            if (intent.hasExtra("endpoint")) {
+                serverEndpoint = intent.getStringExtra("endpoint");
+            }
+            if (intent.hasExtra("accessToken")) {
+                accessToken = intent.getStringExtra("accessToken");
+            }
         }
 
         // Start as foreground service
@@ -209,6 +226,13 @@ public class LocationForegroundService extends Service {
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
+                
+                // Add authorization header if token is available
+                if (accessToken != null && !accessToken.isEmpty()) {
+                    connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                    Log.d(TAG, "Authorization header added");
+                }
+                
                 connection.setDoOutput(true);
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
