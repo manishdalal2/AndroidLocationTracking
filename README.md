@@ -18,7 +18,10 @@ and comes with a very minimal shell for building an app.
 To run the provided example, you can use `npm start` command.
 
 ```bash
-npm start
+nvm use 24
+npm install
+npx cap add android                                                         
+npm run build && npx cap sync android 
 ```
 
 
