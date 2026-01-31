@@ -54,12 +54,31 @@ window.customElements.define(
 
     async startNativeLocationTracking() {
       try {
+        // Get access token (replace with actual token retrieval logic)
+        const accessToken = localStorage.getItem('accessToken') || '';
+        
         const result = await LocationTracker.startTracking({
           endpoint: SERVER_ENDPOINT,
+          accessToken: accessToken,
         });
         console.log('Native location tracking:', result.message);
       } catch (error) {
         console.error('Failed to start native location tracking:', error);
+      }
+    }
+
+    async updateAccessToken(newAccessToken) {
+      try {
+        // Store the new token
+        localStorage.setItem('accessToken', newAccessToken);
+        
+        // Update the token in native plugin
+        const result = await LocationTracker.updateToken({
+          accessToken: newAccessToken,
+        });
+        console.log('Access token updated:', result.message);
+      } catch (error) {
+        console.error('Failed to update access token:', error);
       }
     }
 
