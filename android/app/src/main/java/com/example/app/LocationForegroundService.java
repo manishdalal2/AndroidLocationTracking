@@ -81,7 +81,7 @@ public class LocationForegroundService extends Service {
         // Start periodic task
         startPeriodicLocationSend();
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void createNotificationChannel() {
@@ -253,6 +253,14 @@ public class LocationForegroundService extends Service {
         }
 
         super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.d(TAG, "App task removed - stopping service");
+        // Stop the service when the app is swiped away from recent apps
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
     }
 
     @Nullable
