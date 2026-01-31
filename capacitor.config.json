@@ -1,0 +1,13 @@
+{
+  "appId": "com.example.app",
+  "appName": "com.manh.geo",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false
+    }
+  }
+}
