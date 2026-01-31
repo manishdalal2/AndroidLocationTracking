@@ -22,3 +22,4 @@ npm start
 ```
 
 
+git remote set-url origin git@github-personal:manishdalal2/AndroidLocationTracking.git
