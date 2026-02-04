@@ -49,6 +49,7 @@ public class LocationForegroundService extends Service {
     private Location lastLocation;
     private ExecutorService executorService;
     private LocationListener singleUpdateListener;
+    private boolean locationUpdateProcessed = false;
 
     private String serverEndpoint = "http://192.168.1.155:3000";
     private String accessToken = "";
@@ -185,6 +186,9 @@ public class LocationForegroundService extends Service {
     }
 
     private void fetchAndSendLocation() {
+        // Reset the flag for this new cycle
+        locationUpdateProcessed = false;
+        
         // Acquire wake lock to ensure we can get location
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (wakeLock != null && wakeLock.isHeld()) {
@@ -211,6 +215,13 @@ public class LocationForegroundService extends Service {
         singleUpdateListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+                // Only process the first location update we receive
+                if (locationUpdateProcessed) {
+                    Log.d(TAG, "Location already processed this cycle, ignoring");
+                    return;
+                }
+                
+                locationUpdateProcessed = true;
                 Log.d(TAG, "Fresh location received: " + location.getLatitude() + ", " + location.getLongitude());
                 lastLocation = location;
                 
@@ -220,7 +231,7 @@ public class LocationForegroundService extends Service {
                 // Send the location
                 sendLocationToServer();
                 
-                // Schedule next alarm
+                // Schedule next alarm (only once per cycle now)
                 setupAlarm();
                 
                 // Release wake lock
@@ -285,9 +296,14 @@ public class LocationForegroundService extends Service {
 
         // Fallback timeout - if no location after 90 seconds, use last known and reschedule
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (singleUpdateListener != null) {
+            // Only act if we haven't already processed a location
+            if (!locationUpdateProcessed) {
                 Log.w(TAG, "Location timeout - using last known location");
-                locationManager.removeUpdates(singleUpdateListener);
+                locationUpdateProcessed = true;
+                
+                if (singleUpdateListener != null) {
+                    locationManager.removeUpdates(singleUpdateListener);
+                }
                 
                 if (lastLocation != null) {
                     sendLocationToServer();
@@ -295,6 +311,8 @@ public class LocationForegroundService extends Service {
                 
                 setupAlarm();
                 releaseWakeLock();
+            } else {
+                Log.d(TAG, "Location timeout fired but location already processed");
             }
         }, 90000); // 90 seconds timeout
     }
